@@ -36,17 +36,17 @@ kubectl get pods -A -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metada
 kubectl get svc -A -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name 2>/dev/null |grep -E $namespace_regex > $l_tmp.svc
 #cat $l_tmp
 
-# Loop through each namespace argument
 printf "\033[0;36m%-20s\033[0m\t\033[0;36m%-10s\033[0m\t\033[0;36m%-10s\033[0m\t\033[0;36m%-10s\033[0m\t\033[0;36m%-10s\033[0m\t\033[0;36m%-10s\033[0m\n" "Namespace" "Services" "Pods" "Restarts" "Unhealthy" "Pending"
 
+# Loop through each namespace argument
 
 for namespace in $namespaces
 do
   num_pods=$(cat $l_tmp | grep '^'$namespace | wc -l)
-  unhealthy=$(cat $l_tmp | grep '^'$namespace | grep -v 'Running\|Completed\|Pending' | wc -l)
+  unhealthy=$(cat $l_tmp | grep '^'$namespace | awk '{print $3}' | grep -v 'Running\|Completed\|Pending\|Succeeded' | wc -l)
   pending=$(cat $l_tmp | grep '^'$namespace | grep 'Pending' | wc -l)
   num_services=$(cat $l_tmp.svc | grep '^'$namespace | wc -l)
-  restarts=$(cat $l_tmp |grep '^'$namespace | grep -v 'Pending' | awk '$4 >0' | wc -l)
+  restarts=$(cat $l_tmp |grep '^'$namespace | awk '{print $3}' | grep -v 'Pending' | awk '$4 >0' | wc -l)
 
   if [[ $unhealthy -eq 0 ]] && [[ $restarts -eq 0 ]] && [[ $pending -eq 0 ]] ; then
     printf "\033[0;42m\033[1;37m%-20s\033[0m\t%-10d\t%-10d\t%-10d\t%-10d\t%-10d\n" "$namespace" "$num_services" "$num_pods" "$restarts" "$unhealthy" "$pending"
